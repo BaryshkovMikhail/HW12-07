@@ -139,13 +139,24 @@ Slave 2-3   Read/Write (шарды)   	Горизонтальное раздел
 
 *Пришлите конфиг Docker и SQL скрипт с командами для базы данных*.
 
-Docker Compose конфигурация (docker-compose.yml)
+---
+
+## Решение 3
+
+Docker Compose конфигурация [docker-compose.yml](docker-compose.yml)
+
 
 SQL скрипты для инициализации
-1. Основной master сервер (init-master.sql)
-2. Slave сервер для аналитики (init-slave.sql)
-3. Шарды для пользователей (init-users-shard1.sql, init-users-shard2.sql, init-users-shard3.sql)
-4. Шарды для книг (init-books-shard1.sql, init-books-shard2.sql, init-books-shard3.sql)
+1. Основной master сервер [init-master.sql](init-master.sql)
+2. Slave сервер для аналитики [init-slave.sql](init-slave.sql)
+3. Шарды для пользователей [init-users-shard1.sql](init-users-shard1.sql) , [init-users-shard2.sql](init-users-shard2.sql), [init-users-shard3.sql](init-users-shard3.sql))
+4. Шарды для книг [init-books-shard1.sql](init-books-shard1.sql), [init-books-shard2.sql](init-books-shard2.sql), [init-books-shard3.sql](init-books-shard3.sql)
+
+Для запуска использем команду 
+
+```bash
+docker-compose up -d
+```
 
 ### Система будет доступна:
 
