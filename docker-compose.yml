@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # Основной master сервер (OLTP)
+  postgres-master:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: book_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-master-data:/var/lib/postgresql/data
+      - ./init-master.sql:/docker-entrypoint-initdb.d/init-master.sql
+    networks:
+      - postgres-net
+
+  # Slave сервер для аналитики (OLAP)
+  postgres-slave:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: book_store
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-slave-data:/var/lib/postgresql/data
+      - ./init-slave.sql:/docker-entrypoint-initdb.d/init-slave.sql
+    depends_on:
+      - postgres-master
+    networks:
+      - postgres-net
+
+  # Шарды для пользователей (горизонтальный шардинг)
+  postgres-users-shard1:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_europe
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg-users-shard1-data:/var/lib/postgresql/data
+      - ./init-users-shard1.sql:/docker-entrypoint-initdb.d/init-users-shard1.sql
+    networks:
+      - postgres-net
+
+  postgres-users-shard2:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_asia
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg-users-shard2-data:/var/lib/postgresql/data
+      - ./init-users-shard2.sql:/docker-entrypoint-initdb.d/init-users-shard2.sql
+    networks:
+      - postgres-net
+
+  postgres-users-shard3:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_america
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg-users-shard3-data:/var/lib/postgresql/data
+      - ./init-users-shard3.sql:/docker-entrypoint-initdb.d/init-users-shard3.sql
+    networks:
+      - postgres-net
+
+  # Шарды для книг (горизонтальный шардинг)
+  postgres-books-shard1:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: books_fiction
+    ports:
+      - "5437:5432"
+    volumes:
+      - pg-books-shard1-data:/var/lib/postgresql/data
+      - ./init-books-shard1.sql:/docker-entrypoint-initdb.d/init-books-shard1.sql
+    networks:
+      - postgres-net
+
+  postgres-books-shard2:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: books_science
+    ports:
+      - "5438:5432"
+    volumes:
+      - pg-books-shard2-data:/var/lib/postgresql/data
+      - ./init-books-shard2.sql:/docker-entrypoint-initdb.d/init-books-shard2.sql
+    networks:
+      - postgres-net
+
+  postgres-books-shard3:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: books_educational
+    ports:
+      - "5439:5432"
+    volumes:
+      - pg-books-shard3-data:/var/lib/postgresql/data
+      - ./init-books-shard3.sql:/docker-entrypoint-initdb.d/init-books-shard3.sql
+    networks:
+      - postgres-net
+
+  # PgBouncer для роутинга запросов
+  pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_HOST: postgres-master
+      DB_NAME: book_store
+      POOL_MODE: transaction
+      SERVER_RESET_QUERY: DISCARD ALL
+    ports:
+      - "6432:6432"
+    depends_on:
+      - postgres-master
+    networks:
+      - postgres-net
+
+volumes:
+  pg-master-data:
+  pg-slave-data:
+  pg-users-shard1-data:
+  pg-users-shard2-data:
+  pg-users-shard3-data:
+  pg-books-shard1-data:
+  pg-books-shard2-data:
+  pg-books-shard3-data:
+
+networks:
+  postgres-net:
+    driver: bridge
